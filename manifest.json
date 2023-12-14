@@ -11,5 +11,10 @@
       "matches": ["https://www.youtube.com/watch?v=*"],
       "js": ["content.js"]
     }
-  ]
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "yt-skip@alicerosemurphy.com"
+    }
+  }
 }
