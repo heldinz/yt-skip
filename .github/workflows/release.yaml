@@ -1,0 +1,19 @@
+name: Build artifact
+
+on:
+  push:
+      tags:
+        - '*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps: 
+      - uses: actions/checkout@v3
+      - run: zip -r -FS yt-skip.xpi * --exclude '*.git*'
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "yt-skip.xpi"
