@@ -13,7 +13,7 @@ jobs:
 
     steps: 
       - uses: actions/checkout@v3
-      - run: zip -r -FS yt-skip.xpi * --exclude '*.git*'
+      - run: zip -r -FS yt-skip.xpi * --exclude '*.git*' 'README.md'
       - uses: ncipollo/release-action@v1
         with:
           artifacts: "yt-skip.xpi"
