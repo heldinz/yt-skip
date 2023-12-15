@@ -22,7 +22,7 @@ This extension is unsigned, so it can only be installed in the [Developer Editio
 Upon downloading the `xpi` file using Firefox, it should recognise it as an extension and offer to install it automatically.
 
 1. A pop-up will be displayed, asking for confirmation that you want to install an add-on from GitHub. Choose “Continue to installation.”
-1. The next pop-up will ask you confirm that you want to install an unverified extension. Choose Add.
+1. The next pop-up will ask you to confirm that you want to install an unverified extension. Choose Add.
 1. In the final pop-up, choose whether or not you want the extension to run in private windows.
 
 ### Manual installation
