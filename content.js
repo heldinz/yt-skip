@@ -1,40 +1,88 @@
-let videoEl;
+const DEBUG = true;
 
-function waitForElementToDisplay(selector, interval, callback) {
-  setTimeout(function check() {
-    const element = document.querySelector(selector);
+const overlaySelector = '.ytp-ad-player-overlay-skip-or-preview';
+const muteBtnSelector = '.ytp-mute-button.ytp-button';
+const muteBtnToolTipAttr = 'data-title-no-tooltip';
+const skipBtnSelector = '.ytp-ad-skip-button-modern.ytp-button';
+const durationSelector = '.ytp-ad-duration-remaining';
 
-    if (element) {
-			const volume = videoEl.volume;
-			videoEl.volume = 0;
-      callback(volume);
-    } else {
-      setTimeout(check, interval);
-    }
-  }, interval);
+function observe(node, callback, options) {
+  const observer = new MutationObserver((mutations, ob) => {
+    const result = callback(mutations, ob);
+    if (result) disconnect();
+  });
+
+  observer.observe(
+    node,
+    Object.assign(
+      {
+        childList: true,
+        subtree: true,
+      },
+      options,
+    ),
+  );
+  const disconnect = () => observer.disconnect();
+  return disconnect;
 }
 
-function skip(volume) {
-  const button = document.querySelector('.ytp-ad-skip-button-modern.ytp-button');
+function waitForOverlayToDisplay() {
+	if (DEBUG) console.debug('Waiting for overlay');
 
-  if (button) {
-    button.click();
-		videoEl.volume = volume;
+	observe(document.body, () => {
+	  const overlay = document.querySelector(overlaySelector);
+
+		if (overlay) {
+			if (DEBUG) console.debug('Overlay displayed');
+			skipOrMute();
+	    return true;
+	  }
+	});
+}
+
+function mute() {
+	const muteBtn = document.querySelector(muteBtnSelector);
+	
+	if (muteBtn) {
+		const tooltip = muteBtn.getAttribute(muteBtnToolTipAttr);
+		
+		if (tooltip && typeof (tooltip) === 'string' && tooltip.toLowerCase() === 'mute') {
+			muteBtn.click();
+		
+			observe(document.body, () => {
+				const durationEl = document.querySelector(durationSelector);
+				if (!durationEl) {
+					if (DEBUG) console.debug('Countdown over, unmuting');
+					muteBtn.click();
+					initialize();
+					return true;
+				}
+			});
+		} else {
+			console.log('Already muted, not muting');
+		}
+	} else {
+		console.error('No mute button found');
+	}
+}
+
+function skipOrMute() {
+	if (DEBUG) console.debug('Dealing with overlay');
+  const skipBtn = document.querySelector(skipBtnSelector);
+
+  if (skipBtn) {
+		if (DEBUG) console.debug('Skip button found, skipping');
+    skipBtn.click();
 		initialize();
   } else {
-		const durationEl = document.querySelector('.ytp-ad-duration-remaining');
-		const remaining = durationEl.innerText.split(':');
-		const seconds = (remaining[0] * 60) + remaining[1];
-		setTimeout(function wait() {
-			videoEl.volume = volume;
-			initialize();
-		}, seconds*1000)
+		if (DEBUG) console.debug('No skip button found, muting');
+		mute();
 	}
 }
 
 function initialize() {
-	videoEl = document.querySelector('.video-stream.html5-main-video');
-	waitForElementToDisplay('.ytp-ad-player-overlay-skip-or-preview', 100, skip);
+	if (DEBUG) console.debug('Initializing...');
+	waitForOverlayToDisplay();
 }
 
 initialize();
