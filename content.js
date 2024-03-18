@@ -1,44 +1,12 @@
-const DEBUG = true;
+const DEBUG = false;
+const INTERVAL = 50;
 
-const overlaySelector = '.ytp-ad-player-overlay-skip-or-preview';
+const durationSelector = '.ytp-ad-duration-remaining';
 const muteBtnSelector = '.ytp-mute-button.ytp-button';
 const muteBtnToolTipAttr = 'data-title-no-tooltip';
+const overlaySelector = '.ytp-ad-player-overlay-skip-or-preview';
 const skipBtnSelector = '.ytp-ad-skip-button-modern.ytp-button';
-const durationSelector = '.ytp-ad-duration-remaining';
-
-function observe(node, callback, options) {
-  const observer = new MutationObserver((mutations, ob) => {
-    const result = callback(mutations, ob);
-    if (result) disconnect();
-  });
-
-  observer.observe(
-    node,
-    Object.assign(
-      {
-        childList: true,
-        subtree: true,
-      },
-      options,
-    ),
-  );
-  const disconnect = () => observer.disconnect();
-  return disconnect;
-}
-
-function waitForOverlayToDisplay() {
-	if (DEBUG) console.debug('Waiting for overlay');
-
-	observe(document.body, () => {
-	  const overlay = document.querySelector(overlaySelector);
-
-		if (overlay) {
-			if (DEBUG) console.debug('Overlay displayed');
-			skipOrMute();
-	    return true;
-	  }
-	});
-}
+const videoSelector = '.video-stream.html5-main-video';
 
 function mute() {
 	const muteBtn = document.querySelector(muteBtnSelector);
@@ -66,18 +34,36 @@ function mute() {
 	}
 }
 
-function skipOrMute() {
-	if (DEBUG) console.debug('Dealing with overlay');
+function handleOverlay() {
+	if (DEBUG) console.debug('Handling overlay');
   const skipBtn = document.querySelector(skipBtnSelector);
+	const durationEl = document.querySelector(durationSelector);
 
   if (skipBtn) {
 		if (DEBUG) console.debug('Skip button found, skipping');
     skipBtn.click();
 		initialize();
-  } else {
+  } else if (durationEl) {
 		if (DEBUG) console.debug('No skip button found, muting');
 		mute();
+	} else {
+		if (DEBUG) console.debug('Not an ad, doing nothing');
 	}
+}
+
+function waitForOverlayToDisplay() {
+	if (DEBUG) console.debug('Waiting for overlay');
+	
+	setTimeout(function check() {
+    const overlay = document.querySelector(overlaySelector);
+		
+    if (overlay) {
+			if (DEBUG) console.debug('Overlay displayed');
+			handleOverlay();
+    } else {
+      setTimeout(check, INTERVAL);
+    }
+  }, INTERVAL);
 }
 
 function initialize() {

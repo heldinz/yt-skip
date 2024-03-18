@@ -2,13 +2,10 @@
   "manifest_version": 2,
   "name": "Skip YT Ads",
   "version": "1.0",
-  "description": "Skips YT ads ASAP and mutes otherwise",
-  "permissions": [
-    "activeTab"
-  ],
+  "description": "Skips and mutes YT ads",
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/watch?v=*"],
+      "matches": ["https://www.youtube.com/*"],
       "js": ["content.js"]
     }
   ],
