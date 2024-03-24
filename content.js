@@ -6,7 +6,55 @@ const muteBtnSelector = '.ytp-mute-button.ytp-button';
 const muteBtnToolTipAttr = 'data-title-no-tooltip';
 const overlaySelector = '.ytp-ad-player-overlay-skip-or-preview';
 const skipBtnSelector = '.ytp-ad-skip-button-modern.ytp-button';
-const videoSelector = '.video-stream.html5-main-video';
+
+function observe(node, callback, options) {
+  const observer = new MutationObserver((mutations, ob) => {
+    const result = callback(mutations, ob);
+    if (result) disconnect();
+  });
+
+  observer.observe(
+    node,
+    Object.assign(
+      {
+        childList: true,
+        subtree: true,
+      },
+      options,
+    ),
+  );
+  const disconnect = () => observer.disconnect();
+  return disconnect;
+}
+
+function skip(skipBtn) {
+	if (DEBUG) console.debug('Skip button found, skipping');
+	skipBtn.click();
+	initialize();
+}
+
+function waitAfterMute(muteBtn, unmute=true) {
+	if (DEBUG) console.debug('Starting observer');
+	const overlay = document.querySelector(overlaySelector);
+
+	observe(overlay, () => {
+		const skipBtn = document.querySelector(skipBtnSelector);
+		const durationEl = document.querySelector(durationSelector);
+
+		if (skipBtn) {
+			skip(skipBtn);
+			return true;
+		} else if (!durationEl) {
+			if (DEBUG) console.debug('Countdown over');
+			if (unmute) {
+				if (DEBUG) console.debug('Unmuting');
+				muteBtn.click();
+			}
+			initialize();
+			return true;
+		}
+	});
+}
 
 function mute() {
 	const muteBtn = document.querySelector(muteBtnSelector);
@@ -16,21 +64,14 @@ function mute() {
 		
 		if (tooltip && typeof (tooltip) === 'string' && tooltip.toLowerCase() === 'mute') {
 			muteBtn.click();
-		
-			observe(document.body, () => {
-				const durationEl = document.querySelector(durationSelector);
-				if (!durationEl) {
-					if (DEBUG) console.debug('Countdown over, unmuting');
-					muteBtn.click();
-					initialize();
-					return true;
-				}
-			});
+			waitAfterMute(muteBtn);
 		} else {
-			console.log('Already muted, not muting');
+			console.debug('Already muted, not muting');
+			waitAfterMute(muteBtn, false);
 		}
 	} else {
 		console.error('No mute button found');
+		initialize();
 	}
 }
 
@@ -40,14 +81,13 @@ function handleOverlay() {
 	const durationEl = document.querySelector(durationSelector);
 
   if (skipBtn) {
-		if (DEBUG) console.debug('Skip button found, skipping');
-    skipBtn.click();
-		initialize();
+    skip(skipBtn);
   } else if (durationEl) {
-		if (DEBUG) console.debug('No skip button found, muting');
+		if (DEBUG) console.debug('No skip button found, muting ad');
 		mute();
 	} else {
-		if (DEBUG) console.debug('Not an ad, doing nothing');
+		if (DEBUG) console.debug('Not an ad, reinitializing');
+		initialize();
 	}
 }
 
